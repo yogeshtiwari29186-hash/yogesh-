@@ -23,14 +23,14 @@ object ReportExporter {
 
     fun json(snapshot: SubmissionSnapshot): String = buildString {
         append("{")
-        append(""findingTitle":"").append(escape(snapshot.findingTitle)).append("",")
-        append(""body":"").append(escape(snapshot.body)).append("",")
-        append(""evidenceIds":[")
+        append("\"findingTitle\":\"").append(escape(snapshot.findingTitle)).append("\",")
+        append("\"body\":\"").append(escape(snapshot.body)).append("\",")
+        append("\"evidenceIds\":[")
         snapshot.evidenceIds.forEachIndexed { index, id ->
             if (index > 0) append(",")
-            append(""").append(escape(id)).append(""")
+            append("\"").append(escape(id)).append("\"")
         }
-        append("],"approved":").append(snapshot.approved)
+        append("],\"approved\":").append(snapshot.approved)
         append("}")
     }
 
@@ -40,7 +40,7 @@ object ReportExporter {
         val evidence = snapshot.evidenceIds.joinToString("") {
             "<li>" + escapeHtml(it) + "</li>"
         }
-        return "<!doctype html><html><head><meta charset="utf-8"><title>BugHunter X Submission</title></head>" +
+        return "<!doctype html><html><head><meta charset=\"utf-8\"><title>BugHunter X Submission</title></head>" +
             "<body><h1>BugHunter X Submission</h1><h2>" + title + "</h2>" +
             "<h3>Report</h3><p>" + body + "</p><h3>Evidence</h3><ul>" +
             evidence + "</ul><p>Approved: " + snapshot.approved + "</p></body></html>"
@@ -48,7 +48,7 @@ object ReportExporter {
 
     private fun escape(value: String): String =
         value.replace("\\", "\\\\")
-            .replace(""", "\"")
+            .replace("\"", "\\\"")
             .replace("\n", "\\n")
             .replace("\r", "\\r")
 
@@ -56,6 +56,6 @@ object ReportExporter {
         value.replace("&", "&amp;")
             .replace("<", "&lt;")
             .replace(">", "&gt;")
-            .replace(""", "&quot;")
+            .replace("\"", "&quot;")
             .replace("'", "&#39;")
 }

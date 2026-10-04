@@ -28,3 +28,7 @@ Only assess assets for which you have explicit authorization. This project inten
 5. Exact Submission Preview and approval
 6. Reports and exports
 7. Backend synchronization and audit log
+
+
+## CI
+Android debug builds are validated through GitHub Actions.

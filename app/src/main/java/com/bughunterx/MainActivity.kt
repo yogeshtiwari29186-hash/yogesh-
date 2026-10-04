@@ -128,7 +128,18 @@ private fun BugHunterXApp() {
                         }, modifier = Modifier.fillMaxWidth()) { Text("Create Approved Snapshot") }
                     } }
                 }
-                snapshot?.let { s ->
+                item {
+    ElevatedCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Submission #BH-1042", style = MaterialTheme.typography.titleLarge)
+            Text("To: security@example.com")
+            Text("Included: ✓ Finding  ✓ Impact  ✓ Reproduction  ✓ Request  ✓ Response  ✓ Selected Evidence")
+            Text("Status: SENT ✓")
+            Text("Timestamp: 2026-10-04 08:34")
+        }
+    }
+}
+snapshot?.let { s ->
                     item {
                         ElevatedCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("5. Export", style = MaterialTheme.typography.titleLarge)

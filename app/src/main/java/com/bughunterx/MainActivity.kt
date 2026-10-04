@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.bughunterx.core.ScopeGuard
 import com.bughunterx.core.analysis.PassiveAnalyzer
+import com.bughunterx.core.analysis.HttpPassiveAnalyzer
 import com.bughunterx.core.model.*
 import com.bughunterx.core.report.ReportBuilder
 import com.bughunterx.ui.theme.BugHunterXTheme
@@ -68,7 +69,7 @@ private fun BugHunterXApp() {
         enabled = authorized && target.isNotBlank(),
         onClick = {
          if (ScopeGuard.isAllowed(target)) {
-          findings = PassiveAnalyzer.analyzeTarget(target)
+          findings = PassiveAnalyzer.analyzeTarget(target) + HttpPassiveAnalyzer.analyze(target)
           status = "Passive analysis completed"
           report = ReportBuilder.markdown(target, findings)
          } else {

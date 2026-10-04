@@ -14,42 +14,48 @@ object ReportExporter {
         appendLine()
         appendLine("## Evidence")
         snapshot.evidenceIds.forEachIndexed { index, id ->
-            appendLine("${index + 1}. $id")
+            appendLine((index + 1).toString() + ". " + id)
         }
         appendLine()
         appendLine("## Approval")
-        appendLine("Approved: ${snapshot.approved}")
+        appendLine("Approved: " + snapshot.approved)
     }
 
-    fun json(snapshot: SubmissionSnapshot): String {
-        val title = escape(snapshot.findingTitle)
-        val body = escape(snapshot.body)
-        val ids = snapshot.evidenceIds.joinToString(",") { ""${escape(it)}"" }
-        return """{"findingTitle":"$title","body":"$body","evidenceIds":[$ids],"approved":${snapshot.approved}}"""
+    fun json(snapshot: SubmissionSnapshot): String = buildString {
+        append("{")
+        append(""findingTitle":"").append(escape(snapshot.findingTitle)).append("",")
+        append(""body":"").append(escape(snapshot.body)).append("",")
+        append(""evidenceIds":[")
+        snapshot.evidenceIds.forEachIndexed { index, id ->
+            if (index > 0) append(",")
+            append(""").append(escape(id)).append(""")
+        }
+        append("],"approved":").append(snapshot.approved)
+        append("}")
     }
 
     fun html(snapshot: SubmissionSnapshot): String {
         val title = escapeHtml(snapshot.findingTitle)
-        val body = escapeHtml(snapshot.body).replace("
-", "<br>")
+        val body = escapeHtml(snapshot.body).replace("\n", "<br>")
         val evidence = snapshot.evidenceIds.joinToString("") {
-            "<li>${escapeHtml(it)}</li>"
+            "<li>" + escapeHtml(it) + "</li>"
         }
-        return """<!doctype html>
-<html><head><meta charset="utf-8"><title>BugHunter X Submission</title></head>
-<body><h1>BugHunter X Submission</h1>
-<h2>$title</h2><h3>Report</h3><p>$body</p>
-<h3>Evidence</h3><ul>$evidence</ul>
-<p>Approved: ${snapshot.approved}</p></body></html>"""
+        return "<!doctype html><html><head><meta charset="utf-8"><title>BugHunter X Submission</title></head>" +
+            "<body><h1>BugHunter X Submission</h1><h2>" + title + "</h2>" +
+            "<h3>Report</h3><p>" + body + "</p><h3>Evidence</h3><ul>" +
+            evidence + "</ul><p>Approved: " + snapshot.approved + "</p></body></html>"
     }
 
     private fun escape(value: String): String =
-        value.replace("\\", "\\\\").replace(""", "\"")
-            .replace("
-", "\n").replace("", "\r")
+        value.replace("\\", "\\\\")
+            .replace(""", "\"")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
 
     private fun escapeHtml(value: String): String =
-        value.replace("&", "&amp;").replace("<", "&lt;")
-            .replace(">", "&gt;").replace(""", "&quot;")
+        value.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace(""", "&quot;")
             .replace("'", "&#39;")
 }

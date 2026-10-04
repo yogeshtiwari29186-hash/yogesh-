@@ -12,6 +12,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.bughunterx.core.ScopeGuard
 import com.bughunterx.core.analysis.HttpPassiveAnalyzer
 import com.bughunterx.core.analysis.PassiveAnalyzer
@@ -32,6 +35,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BugHunterXApp() {
     var target by remember { mutableStateOf("") }
@@ -48,6 +52,8 @@ private fun BugHunterXApp() {
     var evidenceValue by remember { mutableStateOf("") }
     var sensitive by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var analyzing by remember { mutableStateOf(false) }
 
     fun refreshEvidence() { evidence = EvidenceVault.all() }
     fun share(text: String, mime: String) {
@@ -69,18 +75,41 @@ private fun BugHunterXApp() {
                             Text("1. Target & Scope", style = MaterialTheme.typography.titleLarge)
                             OutlinedTextField(target, { target = it }, label = { Text("Target URL") }, placeholder = { Text("https://example.com") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                             Row { Checkbox(authorized, { authorized = it }); Text("I confirm this target is explicitly authorized.") }
-                            Button(enabled = authorized && target.isNotBlank(), onClick = {
+                            Button(enabled = authorized && target.isNotBlank() && !analyzing, onClick = {
                                 if (ScopeGuard.isAllowed(target)) {
-                                    findings = PassiveAnalyzer.analyzeTarget(target) + HttpPassiveAnalyzer.analyze(target)
-                                    status = "Passive analysis completed"
-                                    report = ReportBuilder.markdown(target, findings)
-                                    EvidenceVault.add("Analysis metadata", "Passive analysis completed for " + target, false)
-                                    refreshEvidence()
+                                    val requestedTarget = target
+                                    analyzing = true
+                                    status = "Analyzing..."
+                                    scope.launch(Dispatchers.IO) {
+                                        val result = PassiveAnalyzer.analyzeTarget(requestedTarget) +
+                                            HttpPassiveAnalyzer.analyze(requestedTarget)
+                                        withContext(Dispatchers.Main) {
+                                            findings = result
+                                            status = "Passive analysis completed"
+                                            report = ReportBuilder.markdown(requestedTarget, findings)
+                                            EvidenceVault.add(
+                                                "Analysis metadata",
+                                                "Passive analysis completed for " + requestedTarget,
+                                                false
+                                            )
+                                            refreshEvidence()
+                                            analyzing = false
+                                        }
+                                    }
                                 } else {
-                                    findings = listOf(Finding("Scope blocked", "Use a valid HTTP(S) target and confirm authorization.", Severity.HIGH))
-                                    status = "Blocked"; report = ""
+                                    findings = listOf(
+                                        Finding(
+                                            "Scope blocked",
+                                            "Use a valid HTTP(S) target and confirm authorization.",
+                                            Severity.HIGH
+                                        )
+                                    )
+                                    status = "Blocked"
+                                    report = ""
                                 }
-                            }, modifier = Modifier.fillMaxWidth()) { Text("Run Passive Analysis") }
+                            }, modifier = Modifier.fillMaxWidth()) {
+                                Text(if (analyzing) "Analyzing..." else "Run Passive Analysis")
+                            }
                         }
                     }
                 }
